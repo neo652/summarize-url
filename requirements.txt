@@ -35,3 +35,8 @@ streamlit
 pytesseract
 libmagic
 python-magic
+lxml==4.9.2
+langchain
+langchain-community
+beautifulsoup4
+requests

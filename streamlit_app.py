@@ -5,8 +5,22 @@ from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
 from langchain_groq import ChatGroq
 from langchain.chains.summarize import load_summarize_chain
-from langchain_community.document_loaders import UnstructuredURLLoader
+# from langchain_community.document_loaders import UnstructuredURLLoader
+from bs4 import BeautifulSoup
+from langchain.schema import Document
+import requests
 
+def load_webpage_as_document(url: str):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+    }
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    text = soup.get_text(separator="\n", strip=True)
+    
+    return [Document(page_content=text, metadata={"source": url})]
 
 ## sstreamlit APP
 st.set_page_config(page_title="Summarize Text From Website", page_icon="🦜")
@@ -47,13 +61,9 @@ if st.button("Summarize the Content Website"):
         try:
             with st.spinner("Waiting..."):
                 ## loading the website data
-                loader = UnstructuredURLLoader(
-                    urls=[generic_url],
-                    ssl_verify=False,
-                    headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"}
-                )
-                docs = loader.load()
-
+                
+                docs = load_webpage_as_document(generic_url)
+                
                 ## Chain For Summarization
                 chain=load_summarize_chain(llm,chain_type="stuff",prompt=prompt)
                 output_summary=chain.invoke(docs)
